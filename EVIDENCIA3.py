@@ -7,6 +7,9 @@ from collections import namedtuple
 from datetime import date, datetime
 import os
 import csv
+import sys
+import sqlite3
+from sqlite3 import Error
 
 Ventas = namedtuple("Ventas",["Articulo","CantidadVenta","PrecioVenta","FechaVenta", "PrecioTotal"])
 DiccionarioVentas = {}
@@ -16,12 +19,14 @@ notas_ventas = pd.DataFrame(data=DiccionarioVentas)
 
 while True:
     print("\n-- Bienvenido(a) al Menú")
-    print("1) Ver precios")#Lista o menu con los articulos y precios que se visualiza
-    print("2) Agregar una Venta") #Registrar una venta y dentro los articulos
-    print("3) Búsqueda específica") #Consultar una venta
+    print("1) Ver precios")#Lista o menu con los articulos y precios que se visualizar.
+    print("2) Agregar una Venta") #Registrar una venta y dentro los articulos.
+    print("3) Búsqueda específica") #Consultar una venta.
     print("4) Búsqueda específica por fecha") #Consultar una ventas por fecha| el cual imprime un reporte de venta
-    print("5) Guardar datos en CSV") #Guarda en CSV
-    print("6) Salir") #Opcion de salida del programa.
+    print("5) Guardar datos en CSV") #Guarda en CSV.
+    print("6) Crear Base de Datos en SQL") #Guarda en SQL.
+    print("7) Guardar datos en SQL") #Guarda en SQL.
+    print("8) Salir") #Opcion de salida del programa.
 
     opcionElegida = int(input("> "))
 
@@ -111,7 +116,6 @@ while True:
         print(f"El total con IVA en la venta es: {totalvent}")
         print("************")
 
-
     if opcionElegida ==5: #Guardar datos en CSV
         dataGuardado = []
         for i in DiccionarioVentas:
@@ -126,6 +130,47 @@ while True:
         print ("Tus datos han sido guardados")
         print(f"\nGuardado CSV de manera correcta en {os.getcwd()}")
 
-    if opcionElegida == 6:
+    if opcionElegida ==6: #Crear base de datos en SQL
+        try:
+            with sqlite3.connect("EVIDENCIA_PRUEBA_2.db") as conn:
+                mi_cursor = conn.cursor()
+                mi_cursor.execute("CREATE TABLE IF NOT EXISTS FechaID (folio INTEGER PRIMARY KEY, fecha TEXT NOT NULL);")
+                mi_cursor.execute("CREATE TABLE IF NOT EXISTS Venta (folio INTEGER NOT NULL, descripcion TEXT NOT NULL, canitdad INTEGER NOT NULL, precio INTEGER NOT NULL, FOREIGN KEY (folio) REFERENCES FechaID(folio));")
+                print("Tabla creada exitosamente")
+        except Error as e:
+            print(e)
+        except Exception:
+            print(f"Error: {sys.exc_info()[0]}")
+        finally:
+            if conn:
+                conn.close()
+
+    if opcionElegida ==7: #Guardar datos en SQL
+        try:
+            with sqlite3.connect("EVIDENCIA_PRUEBA_2.db") as conn:
+                mi_cursor = conn.cursor()
+                for folioUnico in DiccionarioVentas:
+                    cFolio = True
+                    for items in DiccionarioVentas[folioUnico]:
+                        if cFolio:
+                            mi_cursor.execute(f"SELECT * FROM FechaID WHERE EXISTS (SELECT * FROM FechaID WHERE {folioUnico} = folio)")
+                            registro1 = mi_cursor.fetchall()
+                            if registro1:
+                                print(f"Dato con el folio: {folioUnico}, ya existe")
+                                break
+                            else:
+                                mi_cursor.execute(f"INSERT INTO FechaID VALUES({folioUnico}, '{items.FechaVenta}');")
+                            cFolio = False
+                        mi_cursor.execute(f"INSERT INTO Venta VALUES({folioUnico},'{items.Articulo}',{items.CantidadVenta},{items.PrecioVenta});")
+
+        except Error as e:
+            print(e)
+        except Exception:
+            print(f"Error: {sys.exc_info()[0]}")
+        finally:
+            if conn:
+                conn.close()
+
+    if opcionElegida == 8:
         print("Gracias por usar el programa, buen día.")
         break
