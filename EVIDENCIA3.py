@@ -132,10 +132,10 @@ while True:
 
     if opcionElegida ==6: #Crear base de datos en SQL
         try:
-            with sqlite3.connect("EVIDENCIA_PRUEBA_2.db") as conn:
+            with sqlite3.connect("EVIDENCIA_3.db") as conn:
                 mi_cursor = conn.cursor()
-                mi_cursor.execute("CREATE TABLE IF NOT EXISTS FechaID (folio INTEGER PRIMARY KEY, fecha TEXT NOT NULL);")
-                mi_cursor.execute("CREATE TABLE IF NOT EXISTS Venta (folio INTEGER NOT NULL, descripcion TEXT NOT NULL, canitdad INTEGER NOT NULL, precio INTEGER NOT NULL, FOREIGN KEY (folio) REFERENCES FechaID(folio));")
+                mi_cursor.execute("CREATE TABLE IF NOT EXISTS Folio_Fecha (folio INTEGER PRIMARY KEY, fecha TEXT NOT NULL);")
+                mi_cursor.execute("CREATE TABLE IF NOT EXISTS Venta (folio INTEGER NOT NULL, descripcion TEXT NOT NULL, canitdad INTEGER NOT NULL, precio INTEGER NOT NULL, total_sin_iva INTEGER NOT NULL ,total_iva INTEGER NOT NULL, FOREIGN KEY (folio) REFERENCES Folio_Fecha(folio));")
                 print("Tabla creada exitosamente")
         except Error as e:
             print(e)
@@ -147,21 +147,21 @@ while True:
 
     if opcionElegida ==7: #Guardar datos en SQL
         try:
-            with sqlite3.connect("EVIDENCIA_PRUEBA_2.db") as conn:
+            with sqlite3.connect("EVIDENCIA_3.db") as conn:
                 mi_cursor = conn.cursor()
                 for folioUnico in DiccionarioVentas:
                     cFolio = True
                     for items in DiccionarioVentas[folioUnico]:
                         if cFolio:
-                            mi_cursor.execute(f"SELECT * FROM FechaID WHERE EXISTS (SELECT * FROM FechaID WHERE {folioUnico} = folio)")
+                            mi_cursor.execute(f"SELECT * FROM Folio_Fecha WHERE EXISTS (SELECT * FROM Folio_Fecha WHERE {folioUnico} = folio)")
                             registro1 = mi_cursor.fetchall()
                             if registro1:
                                 print(f"Dato con el folio: {folioUnico}, ya existe")
                                 break
                             else:
-                                mi_cursor.execute(f"INSERT INTO FechaID VALUES({folioUnico}, '{items.FechaVenta}');")
+                                mi_cursor.execute(f"INSERT INTO Folio_Fecha VALUES({folioUnico}, '{items.FechaVenta}');")
                             cFolio = False
-                        mi_cursor.execute(f"INSERT INTO Venta VALUES({folioUnico},'{items.Articulo}',{items.CantidadVenta},{items.PrecioVenta});")
+                        mi_cursor.execute(f"INSERT INTO Venta VALUES({folioUnico},'{items.Articulo}',{items.CantidadVenta},{items.PrecioVenta},{items.PrecioVenta * items.CantidadVenta},{items.PrecioTotal});")
 
         except Error as e:
             print(e)
@@ -171,6 +171,6 @@ while True:
             if conn:
                 conn.close()
 
-    if opcionElegida == 8:
+    if opcionElegida == 8: #Salida del programa
         print("Gracias por usar el programa, buen día.")
         break
